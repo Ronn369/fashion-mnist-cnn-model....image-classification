@@ -19,7 +19,7 @@ uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png
 if uploaded_file is not None:
     img = Image.open(uploaded_file).convert('L')
     img = img.resize((28, 28))
-    img = image.eval(img, lambda x: 255-x)
+    img = ImageOps.invert(img)
   
     img_array = np.array(img) / 255.0
     img_array = img_array.reshape(1, 28, 28, 1)
