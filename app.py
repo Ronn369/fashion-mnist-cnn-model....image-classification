@@ -2,39 +2,43 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image, ImageOps
-import io
 
-st.set_page_config(page_title="FashionMNIST Debugger", layout="wide")
+# title of the page of the streamlit
+st.set_page_config(page_title="Fashion MNIST Image Classifier", layout="centered")
 
-# first i have took the model which i have trained
+# here i have linked the trained model which i have made
 model = tf.keras.models.load_model("fashion_mnist_cnn_model.h5")
 
-CLASS_NAMES = ['T-shirt/top','Trouser','Pullover','Dress','Coat',
-               'Sandal','Shirt','Sneaker','Bag','Ankle boot']
+# Class names which is present in the mnist
+CLASS_NAMES = [
+    'T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',
+    'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot'
+]
 
-st.title("Debug: Fashion MNIST Classifier")
-st.write("This debug view shows exactly what image is sent to the model and the top predictions.")
+# this is the title of the page of streamlit
+st.title("Image Classifier Using Fashion Mnist")
+st.write("Upload an image of a clothing item to see what the model predicts!")
 
-uploaded_file = st.file_uploader("Upload an image (jpg/png)", type=["jpg","jpeg","png"])
+# File uploader
+uploaded_file = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # it will show original image which i have uploaded
-    st.subheader("Original uploaded image")
-    uploaded_bytes = uploaded_file.read()
-    orig_img = Image.open(io.BytesIO(uploaded_bytes)).convert("RGB")
-    st.image(orig_img, use_column_width=False, width=200)
+    # Open and display original image
+    image = Image.open(uploaded_file).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_column_width=False, width=200)
 
-    # since the mnist used the greyscale image so here i have converted the image into grey
-    img = Image.open(io.BytesIO(uploaded_bytes)).convert('L')   
-    img = img.resize((28,28))                                   
-    img = ImageOps.invert(img)                                  
-    
+    # Convert to grayscale, resize, invert, and normalize
+    img = image.convert("L")             # grayscale
+    img = img.resize((28, 28))           # resize to 28x28
+    img = ImageOps.invert(img)           # invert colors (important for Fashion MNIST)
+    img_array = np.array(img).astype("float32") / 255.0
+    img_array = img_array.reshape(1, 28, 28, 1)
 
-    top3_idx = preds.argsort()[-3:][::-1]
-    st.subheader("Top-3 predictions (class : probability)")
-    for i in top3_idx:
-        st.write(f"{CLASS_NAMES[i]} : {preds[i]:.4f}")
+    # Prediction
+    prediction = model.predict(img_array)[0]
+    predicted_class = CLASS_NAMES[np.argmax(prediction)]
+    confidence = np.max(prediction) * 100
 
-    
-   
-
+    # Display result
+    st.subheader(f"Predicted: {predicted_class}")
+    st.write(f"Confidence: {confidence:.2f}%")
